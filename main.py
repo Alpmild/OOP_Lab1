@@ -18,21 +18,34 @@ class RequestHandler:
 
     @staticmethod
     def get_url(url_: str, params_: dict):
-        pass
+        return url_.format(**params_)
+
+    def open(self, url_: str):
+        if self.check_connection():
+            webbrowser.open(url_)
+        else:
+            print("Нет подключения.")
+
+    @staticmethod
+    def check_connection():
+        return req.get('http://ya.ru').ok
 
 
 class User:
-    def __init__(self):
-        self.request = None
+    def __init__(self, _search_engine):
+        self._request = None
+        self._search_engine = RequestHandler()
         self.set_req()
 
     def set_req(self):
-        self.request = input("Введите запрос: ")
-        if not self.request:
-            self.request = " "
+        self._request = input("Введите запрос: ")
+        if not self._request:
+            self._request = " "
 
     def prompt(self, url_: str, params_: dict):
-        params_["srsearch"] = self.request
+        params_["srsearch"] = self._request
+        if not self._search_engine.check_connection():
+            return None
         return RequestHandler.search(url_, params_)
 
     @staticmethod
@@ -58,12 +71,17 @@ class User:
 
 
 def main():
-    user = User()
-    result = user.prompt(url, search_params.copy())
-    page_id = user.get_id(*result)
+    searcher = RequestHandler()
 
+    user = User(searcher)
+    result = user.prompt(url, search_params.copy())
+    if result is None:
+        print("Нет подключения.")
+        exit(0)
+
+    page_id = user.get_id(*result)
     if page_id != -1:
-        webbrowser.open(f"https://ru.wikipedia.org/?curid={page_id}")
+        searcher.open(f"https://ru.wikipedia.org/?curid={page_id}")
 
 
 if __name__ == '__main__':
